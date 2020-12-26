@@ -34,9 +34,10 @@ cycle_period = CYCLE_PERIOD_100_S
 # Variables in HA will have names like: SENSOR_NAME.temperature, etc.
 SENSOR_NAME = "kitchen3"
 
-# Specify the IP address of the computer running Home Assistant. 
-# You can find this from the admin interface of your router.
-HOME_ASSISTANT_IP = "192.168.43.144"
+# Specify the URL of the Home Assistant instance. 
+HOME_ASSISTANT_URL = "http://192.168.43.144:8123"
+# Set to false for unverified SSL connections
+HOME_ASSISTANT_SSL_VERIFY = True    
 
 # Security access token: the Readme and User Guide explain how to get this
 LONG_LIVED_ACCESS_TOKEN = "PASTE YOUR TOKEN HERE WITHIN QUOTES"
@@ -97,7 +98,7 @@ while (True):
     variables.append(particle)
   try:
     for v in variables:
-      url = ("http://" + HOME_ASSISTANT_IP + ":8123/api/states/" + 
+      url = (HOME_ASSISTANT_URL + "/api/states/" + 
             SENSOR_NAME + "." + v['name'].replace(' ','_'))
       head = {"Content-type": "application/json","Authorization": "Bearer " + LONG_LIVED_ACCESS_TOKEN}
       try:
@@ -106,13 +107,13 @@ while (True):
         valueStr = v['data']
       payload = {"state":valueStr, "attributes":{"unit_of_measurement":v['unit'],
                  "friendly_name":v['name'], "icon":"mdi:" + v['icon']}}
-      requests.post(url, json=payload, headers=head, timeout=2)
+      requests.post(url, json=payload, headers=head, timeout=2, verify=HOME_ASSISTANT_SSL_VERIFY)
   except Exception as e:
     # An error has occurred, likely due to a lost network connection, 
     # and the post has failed.
     # The program will retry with the next data release and will succeed 
     # if the network reconnects.
-    print("HTTP POST failed with the following error:")
+    print("HTTP(S) POST failed with the following error:")
     print(repr(e))
     print("The program will continue and retry on the next data output.")
 
